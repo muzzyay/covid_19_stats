@@ -9,7 +9,7 @@ class App extends Component {
   state = {
     selected:null,
     world:null,
-    stats: null
+    stats: null,
   }
 
   componentWillMount(){
@@ -24,23 +24,24 @@ class App extends Component {
       let payload = {
         confirmed: data.confirmed.value,
         recovered: data.recovered.value,
-        deaths: data.deaths.value
+        deaths: data.deaths.value,
+        last_update: new Date(data.lastUpdate)
       }
-      this.setState({world: payload, stats: payload})
+      this.setState({stats: payload})
     }catch(err){
       let payload = {
         confirmed: 0,
         recovered: 0,
         deaths: 0
       }
-      this.setState({world: payload, stats: payload})
+      this.setState({stats: payload})
     }
     
   }
 
   _handleSelect = async country =>{
     this.setState({selected: country});
-    if (!country) return this.setState({stats: this.state.world});
+    if (!country) return this.getWorldData();
 
     try{
       const response = await fetch("https://covid19.mathdro.id/api/countries/"+countries[country]);
@@ -48,7 +49,8 @@ class App extends Component {
       let payload = {
         confirmed: data.confirmed.value,
         recovered: data.recovered.value,
-        deaths: data.deaths.value
+        deaths: data.deaths.value,
+        last_update: new Date(data.lastUpdate)
       }
   
       this.setState({stats: payload})
@@ -56,7 +58,8 @@ class App extends Component {
       let payload = {
         confirmed: 0,
         recovered: 0,
-        deaths: 0
+        deaths: 0,
+        last_update: new Date()
       }
       this.setState({stats: payload})
     }
@@ -144,6 +147,7 @@ class App extends Component {
           
           
         </Row>
+            <p className="text-center">{`Last Updated : ${stats.last_update}`}</p>
       </Container>
       <footer className="container-fluid">
         <nav className="navbar fixed-bottom footer-style justify-content-center">
