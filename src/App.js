@@ -8,9 +8,12 @@ import {Container, Row, Col, Dropdown, Jumbotron} from 'react-bootstrap';
 class App extends Component {
   state = {
     selected:null,
+    selectedRegion: null,
     world:null,
     stats: null,
-    filterValue: ''
+    filterValue: '',
+    filterRegion:'',
+    regions: {}
   }
 
   componentWillMount(){
@@ -21,7 +24,9 @@ class App extends Component {
 
     // try{
 
-    //   const url = `https://services9.arcgis.com/N9p5hsImWXAccRNI/arcgis/rest/services/Z7biAeD8PAkqgmWhxG2A/FeatureServer/1/query?f=json&where=(Confirmed > 0) AND (Deaths>0) AND (Country_Region='China')&returnGeometry=false&spatialRel=esriSpatialRelIntersects&outFields=*&orderByFields=Deaths desc,Country_Region asc,Province_State asc&outSR=102100&resultOffset=0&resultRecordCount=250&cacheHint=true`
+    //   const url = `https://services9.arcgis.com/N9p5hsImWXAccRNI/arcgis/rest/services/Z7biAeD8PAkqgmWhxG2A/FeatureServer/1/query?f=json&where=(Confirmed > 0) AND (Deaths>0)&returnGeometry=false&spatialRel=esriSpatialRelIntersects&outFields=*&orderByFields=Deaths desc,Country_Region asc,Province_State asc&outSR=102100&resultOffset=0&resultRecordCount=250&cacheHint=true`
+
+    //   const copy = `https://services9.arcgis.com/N9p5hsImWXAccRNI/arcgis/rest/services/Z7biAeD8PAkqgmWhxG2A/FeatureServer/1/query?f=json&where=(Confirmed > 0) AND (Deaths>0) AND (Country_Region='China')&returnGeometry=false&spatialRel=esriSpatialRelIntersects&outFields=*&orderByFields=Deaths desc,Country_Region asc,Province_State asc&outSR=102100&resultOffset=0&resultRecordCount=250&cacheHint=true`
 
     //   const response = await fetch(url);
     //   const data = await response.json();
@@ -52,13 +57,34 @@ class App extends Component {
     
   }
 
+  _handleSelectRegion = region=>{
+    const {confirmed, deaths, recovered, lastUpdate} = this.state.regions[region];
+
+    let stats = {
+      confirmed,
+      recovered,
+      deaths,
+      last_update: new Date(lastUpdate)
+    }
+
+    this.setState({selectedRegion: region, stats});
+  }
+
   _handleSelect = async country =>{
-    this.setState({selected: country});
+    this.setState({selected: country, selectedRegion: null, regions: {}});
     if (!country) return this.getWorldData();
 
     try{
       const response = await fetch("https://covid19.mathdro.id/api/countries/"+countries[country]);
       const data = await response.json();
+
+      const res = await fetch("https://covid19.mathdro.id/api/countries/"+countries[country]+"/confirmed");
+      const regionData = await res.json();
+
+      let regions = {};
+
+      regionData&&regionData.filter(reg=>reg.provinceState).forEach(region=>regions[region.provinceState]=region);
+
       let payload = {
         confirmed: data.confirmed.value,
         recovered: data.recovered.value,
@@ -66,7 +92,7 @@ class App extends Component {
         last_update: new Date(data.lastUpdate)
       }
   
-      this.setState({stats: payload})
+      this.setState({stats: payload, regions})
     }catch(err){
       let payload = {
         confirmed: 0,
@@ -83,11 +109,15 @@ class App extends Component {
 
   
   render (){
-    const {selected, stats, filterValue} = this.state;
+    const {selected, selectedRegion, stats, filterValue, filterRegion, regions} = this.state;
 
     if (!stats) return null;
 
     let filteredCountries = (filterValue && Object.entries(countries).filter(([name, code])=> name.toLowerCase().includes(filterValue.toLowerCase()) || name.toLowerCase().includes(filterValue.toLowerCase()))) || Object.entries(countries);
+
+    let filteredRegions = (filterRegion && Object.keys(regions).filter(region=>region.toLowerCase().includes(filterRegion.toLowerCase()))) || Object.keys(regions);
+
+
     return (
       <>
       <Jumbotron fluid className="text-center">
@@ -98,14 +128,14 @@ class App extends Component {
         
         
         <Row className="justify-content-center  mt-2">
-          <Col md={3} className="justify-content-center align-items-center text-center">
+          <Col md={3} className="justify-content-center align-items-center text-center mb-2">
           <Dropdown>
           <Dropdown.Toggle variant="info" id="dropdown-basic">
-            SELECT A COUNTRY
+            {selected ? selected :'SELECT A COUNTRY'}
           </Dropdown.Toggle>
 
           <Dropdown.Menu
-          style={{height: "30vh", overflow: "auto"}}
+          style={{maxHeight: "50vh", overflow: "auto"}}
           >
             
             <input 
@@ -143,15 +173,50 @@ class App extends Component {
           </Dropdown.Menu>
         </Dropdown>
 
-              
-             
-            
-          
           </Col>
+          {
+            Object.keys(regions).length
+            ?
+            <Col md={3} className="justify-content-center align-items-center text-center">
+          <Dropdown>
+          <Dropdown.Toggle variant="info" id="dropdown-basic">
+            {selectedRegion ? selectedRegion : 'SELECT A PROVINCE/STATE'}
+          </Dropdown.Toggle>
+
+          <Dropdown.Menu
+          style={{maxHeight: "50vh", overflow: "auto"}}
+          >
+            
+            <input 
+            type="text" 
+            placeholder="Type to Filter..." 
+            style={{border:'1px solid gray', borderRadius:"4px", padding: '3px 3px', marginLeft: '20px'}}
+            onChange={e=>this.setState({filterRegion: e.target.value})}
+            value={filterRegion}
+            />
+
+            <Dropdown.Divider/>
+          {
+                filteredRegions.map((region, index)=> (
+                  <Dropdown.Item
+                  key={index}
+                   eventKey={region} 
+                   onSelect={(region)=>this._handleSelectRegion(region)}
+                   active={selectedRegion===region}
+                   >{region}</Dropdown.Item>
+                ))
+              }
+          </Dropdown.Menu>
+        </Dropdown>
+
+          </Col>
+            :
+            null
+          }
         </Row>
         <Row>
           <Col className="mt-4 text-center">
-          <h4>{`${selected || 'THE WORLD'}`}</h4>
+          <h4>{`${selectedRegion ? selectedRegion+",": ''} ${selected || 'THE WORLD'}`}</h4>
           </Col>
         </Row>
         <Row className="justify-content-between">
