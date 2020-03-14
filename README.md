@@ -1,1 +1,1 @@
-# covid_19_stats
+# tip_calculator
