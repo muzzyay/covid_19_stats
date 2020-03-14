@@ -74,11 +74,13 @@ class App extends Component {
     this.setState({selected: country, selectedRegion: null, regions: {}});
     if (!country) return this.getWorldData();
 
+    let theCountry = countries[country] === 'TW' ? 'Taiwan*' : countries[country];
+
     try{
-      const response = await fetch("https://covid19.mathdro.id/api/countries/"+countries[country]);
+      const response = await fetch("https://covid19.mathdro.id/api/countries/"+theCountry);
       const data = await response.json();
 
-      const res = await fetch("https://covid19.mathdro.id/api/countries/"+countries[country]+"/confirmed");
+      const res = await fetch("https://covid19.mathdro.id/api/countries/"+theCountry+"/confirmed");
       const regionData = await res.json();
 
       let regions = {};
