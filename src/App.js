@@ -148,11 +148,11 @@ class App extends Component {
 
     return (
       <>
-      <Jumbotron fluid className="text-center bg-transparent">
+      <Container className="mb-5">
+      <Jumbotron  className="text-center text-white jumbo">
         <h1>COVID-19 IN NUMBERS</h1>
         
       </Jumbotron>
-      <Container className="mb-5">
         
         
         <Row className="justify-content-center ">
