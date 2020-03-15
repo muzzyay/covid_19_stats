@@ -155,7 +155,7 @@ class App extends Component {
       <Container className="mb-5">
         
         
-        <Row className="justify-content-center  mt-2">
+        <Row className="justify-content-center ">
           <Col md={3} className="justify-content-center align-items-center text-center mb-2">
           <Dropdown>
           <Dropdown.Toggle variant="info" >
