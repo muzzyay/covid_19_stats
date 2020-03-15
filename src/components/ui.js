@@ -45,9 +45,7 @@ function numberFormatter (number){
   return new Intl.NumberFormat('en-US').format(number)
 }
 
-function percentFormatter (number){
-  return Math.round(parseFloat(number*100));
-}
+
 
 function roundTo2Decimal(num){
   return Math.round(((num*100) + Number.EPSILON) * 100) / 100;

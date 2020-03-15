@@ -1,7 +1,9 @@
 import React, {Component} from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import {InfoBox} from "./components/ui";
-import countries from "./constants/countries";
+import countries, {codes} from "./constants/countries";
+
+import {groupBy} from "lodash";
 
 import {Container, Row, Col, Dropdown, Jumbotron} from 'react-bootstrap';
 
@@ -13,7 +15,8 @@ class App extends Component {
     stats: null,
     filterValue: '',
     filterRegion:'',
-    regions: {}
+    regions: {},
+    ctCodes: null
   }
 
   componentWillMount(){
@@ -22,19 +25,25 @@ class App extends Component {
 
   getWorldData = async ()=>{
 
-    // try{
+    try{
 
-    //   const url = `https://services9.arcgis.com/N9p5hsImWXAccRNI/arcgis/rest/services/Z7biAeD8PAkqgmWhxG2A/FeatureServer/1/query?f=json&where=(Confirmed > 0) AND (Deaths>0)&returnGeometry=false&spatialRel=esriSpatialRelIntersects&outFields=*&orderByFields=Deaths desc,Country_Region asc,Province_State asc&outSR=102100&resultOffset=0&resultRecordCount=250&cacheHint=true`
+      // const url = `https://services9.arcgis.com/N9p5hsImWXAccRNI/arcgis/rest/services/Z7biAeD8PAkqgmWhxG2A/FeatureServer/1/query?f=json&where=(Confirmed > 0) AND (Deaths>0)&returnGeometry=false&spatialRel=esriSpatialRelIntersects&outFields=*&orderByFields=Deaths desc,Country_Region asc,Province_State asc&outSR=102100&resultOffset=0&resultRecordCount=250&cacheHint=true`
 
-    //   const copy = `https://services9.arcgis.com/N9p5hsImWXAccRNI/arcgis/rest/services/Z7biAeD8PAkqgmWhxG2A/FeatureServer/1/query?f=json&where=(Confirmed > 0) AND (Deaths>0) AND (Country_Region='China')&returnGeometry=false&spatialRel=esriSpatialRelIntersects&outFields=*&orderByFields=Deaths desc,Country_Region asc,Province_State asc&outSR=102100&resultOffset=0&resultRecordCount=250&cacheHint=true`
+      // const copy = `https://services9.arcgis.com/N9p5hsImWXAccRNI/arcgis/rest/services/Z7biAeD8PAkqgmWhxG2A/FeatureServer/1/query?f=json&where=(Confirmed > 0) AND (Deaths>0) AND (Country_Region='China')&returnGeometry=false&spatialRel=esriSpatialRelIntersects&outFields=*&orderByFields=Deaths desc,Country_Region asc,Province_State asc&outSR=102100&resultOffset=0&resultRecordCount=250&cacheHint=true`
 
-    //   const response = await fetch(url);
-    //   const data = await response.json();
-    //   console.log(data, 'COVID')
+      const URL ="https://covid19.mathdro.id/api/confirmed"
 
-    // }catch(err){
-    //   console.log(err, "COVID ERR")
-    // }
+      const response = await fetch(URL);
+      const data = await response.json();
+      
+      const countriesGrupedByiso = groupBy(data, 'iso2');
+      this.setState({ctCodes: Object.keys(countriesGrupedByiso)});
+      // console.log(groupBy(data, 'iso2'), "COVID")
+      // console.log(data.map(dt=>dt.deaths).reduce((a,c)=>a+c, 0), 'COVID')
+
+    }catch(err){
+      console.log(err, "COVID ERR")
+    }
 
     try{
       const response = await fetch("https://covid19.mathdro.id/api");
@@ -74,7 +83,22 @@ class App extends Component {
     this.setState({selected: country, selectedRegion: null, regions: {}});
     if (!country) return this.getWorldData();
 
-    let theCountry = countries[country] === 'TW' ? 'Taiwan*' : countries[country];
+    // let theCountry = countries[country] === 'TW' ? 'Taiwan*' : countries[country];
+
+    let theCountry = codes[countries[country]];
+
+    // let errs = []
+
+    // for(const key in codes){
+    //   try {
+    //     const response = await fetch("https://covid19.mathdro.id/api/countries/"+codes[key]);
+    //     const data = await response.json();
+    //   }catch(err){
+    //     errs.push(codes[key])
+    //   }
+    // }
+
+    // console.log(errs, "ERRORS")
 
     try{
       const response = await fetch("https://covid19.mathdro.id/api/countries/"+theCountry);
@@ -111,18 +135,20 @@ class App extends Component {
 
   
   render (){
-    const {selected, selectedRegion, stats, filterValue, filterRegion, regions} = this.state;
+    const {selected, selectedRegion, stats, filterValue, filterRegion, regions, ctCodes} = this.state;
 
-    if (!stats) return null;
+    if (!stats || !ctCodes) return null;
 
-    let filteredCountries = (filterValue && Object.entries(countries).filter(([name, code])=> name.toLowerCase().includes(filterValue.toLowerCase()) || name.toLowerCase().includes(filterValue.toLowerCase()))) || Object.entries(countries);
+    const countriesWithData = Object.entries(countries).filter(([name, code])=>ctCodes.includes(code))
+
+    let filteredCountries = (filterValue && countriesWithData.filter(([name, code])=> name.toLowerCase().includes(filterValue.toLowerCase()) || name.toLowerCase().includes(filterValue.toLowerCase()))) || countriesWithData;
 
     let filteredRegions = (filterRegion && Object.keys(regions).filter(region=>region.toLowerCase().includes(filterRegion.toLowerCase()))) || Object.keys(regions);
 
 
     return (
       <>
-      <Jumbotron fluid className="text-center">
+      <Jumbotron fluid className="text-center bg-transparent">
         <h1>COVID-19 IN NUMBERS</h1>
         
       </Jumbotron>
@@ -132,7 +158,7 @@ class App extends Component {
         <Row className="justify-content-center  mt-2">
           <Col md={3} className="justify-content-center align-items-center text-center mb-2">
           <Dropdown>
-          <Dropdown.Toggle variant="info" id="dropdown-basic">
+          <Dropdown.Toggle variant="info" >
             {selected ? selected :'SELECT A COUNTRY'}
           </Dropdown.Toggle>
 
@@ -181,7 +207,7 @@ class App extends Component {
             ?
             <Col md={3} className="justify-content-center align-items-center text-center">
           <Dropdown>
-          <Dropdown.Toggle variant="info" id="dropdown-basic">
+          <Dropdown.Toggle variant="info" >
             {selectedRegion ? selectedRegion : 'SELECT A PROVINCE/STATE'}
           </Dropdown.Toggle>
 
