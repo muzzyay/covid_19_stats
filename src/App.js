@@ -26,11 +26,29 @@ class App extends Component {
 
   getWorldData = async ()=>{
 
+
+    // try{
+
+    //   const res = await fetch("https://services9.arcgis.com/N9p5hsImWXAccRNI/arcgis/rest/services/Z7biAeD8PAkqgmWhxG2A/FeatureServer/1/query?f=json&where=Confirmed%20%3E%20-1&returnGeometry=false&spatialRel=esriSpatialRelIntersects&outFields=*&orderByFields=Confirmed%20desc%2CCountry_Region%20asc%2CProvince_State%20asc&outSR=102100&resultOffset=0&cacheHint=true");
+
+
+    //   // &resultRecordCount=1250
+
+    //   // .map(dt=>dt.Confirmed).reduce((a,c)=>a+c,0)
+
+    //   const data= await res.json();
+
+    //   let countries = groupBy(data.features.map(dt=>dt.attributes), 'Country_Region');
+
+    //   console.log(countries, "DATA")
+
+    // }catch(err){
+    //   console.log(err, "DATA")
+    // }
+
     try{
 
-      // const url = `https://services9.arcgis.com/N9p5hsImWXAccRNI/arcgis/rest/services/Z7biAeD8PAkqgmWhxG2A/FeatureServer/1/query?f=json&where=(Confirmed > 0) AND (Deaths>0)&returnGeometry=false&spatialRel=esriSpatialRelIntersects&outFields=*&orderByFields=Deaths desc,Country_Region asc,Province_State asc&outSR=102100&resultOffset=0&resultRecordCount=250&cacheHint=true`
-
-      // const copy = `https://services9.arcgis.com/N9p5hsImWXAccRNI/arcgis/rest/services/Z7biAeD8PAkqgmWhxG2A/FeatureServer/1/query?f=json&where=(Confirmed > 0) AND (Deaths>0) AND (Country_Region='China')&returnGeometry=false&spatialRel=esriSpatialRelIntersects&outFields=*&orderByFields=Deaths desc,Country_Region asc,Province_State asc&outSR=102100&resultOffset=0&resultRecordCount=250&cacheHint=true`
+      
 
       const URL ="https://covid19.mathdro.id/api/confirmed"
 
@@ -275,7 +293,7 @@ class App extends Component {
 
             <Dropdown.Divider/>
           {
-                filteredRegions.map((region, index)=> (
+                filteredRegions.sort().map((region, index)=> (
                   <Dropdown.Item
                   key={index}
                    eventKey={region} 
@@ -343,3 +361,5 @@ function formatDate(date){
 
   return date.toLocaleTimeString('en-US', options);
 }
+
+
