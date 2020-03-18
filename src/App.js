@@ -1,6 +1,7 @@
 import React, {Component} from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import {InfoBox} from "./components/ui";
+import Chart from "./components/chart";
 import countries from "./constants/countries";
 
 import {groupBy} from "lodash";
@@ -17,50 +18,26 @@ class App extends Component {
     filterRegion:'',
     regions: {},
     ctCodes: null,
-    all_data: null
+    all_data: null,
+    last10days: null,
+    tendays: null
   }
 
   componentWillMount(){
     this.getWorldData();
   }
 
-  getWorldData = async ()=>{
+  dataRestructure = (data, code=null)=>{
+    const {selected, selectedRegion} = this.state;
 
-
-    // try{
-
-    //   const res = await fetch("https://services9.arcgis.com/N9p5hsImWXAccRNI/arcgis/rest/services/Z7biAeD8PAkqgmWhxG2A/FeatureServer/1/query?f=json&where=Confirmed%20%3E%20-1&returnGeometry=false&spatialRel=esriSpatialRelIntersects&outFields=*&orderByFields=Confirmed%20desc%2CCountry_Region%20asc%2CProvince_State%20asc&outSR=102100&resultOffset=0&cacheHint=true");
-
-
-    //   // &resultRecordCount=1250
-
-    //   // .map(dt=>dt.Confirmed).reduce((a,c)=>a+c,0)
-
-    //   const data= await res.json();
-
-    //   let countries = groupBy(data.features.map(dt=>dt.attributes), 'Country_Region');
-
-    //   console.log(countries, "DATA")
-
-    // }catch(err){
-    //   console.log(err, "DATA")
-    // }
-
-    try{
-
-      
-
-      const URL ="https://covid19.mathdro.id/api/confirmed"
-
-      const response = await fetch(URL);
-      const data = await response.json();
-      
-      const countriesGrupedByiso = groupBy(data, 'iso2');
+    const countriesGrupedByiso = groupBy(data, 'iso2');
+    
+    
       let all_data = {};
 
 
       Object.entries(countriesGrupedByiso).forEach(([code, data])=>{
-        console.log(code, data)
+        
         let country = data[0].countryRegion;
         let confirmed = data.map(dt=>dt.confirmed).reduce((a,c)=>a+c,0);
         let recovered = data.map(dt=>dt.recovered).reduce((a,c)=>a+c,0); 
@@ -68,6 +45,8 @@ class App extends Component {
         let active = data.map(dt=>dt.active).reduce((a,c)=>a+c,0);
         let lastUpdate = data.map(dt=>dt.lastUpdate).sort((a,b)=>b-a)[0];
         let regions = data.filter(dt=>dt.provinceState).length ? data.filter(dt=>dt.provinceState) : null;
+
+        
 
         all_data[code] = {
           country,
@@ -87,10 +66,94 @@ class App extends Component {
         active: Object.values(all_data).map(dt=>dt.active).reduce((a,c)=>a+c,0),
         last_update: new Date(Object.values(all_data).map(dt=>dt.lastUpdate).sort((a,b)=>b-a)[0])
       }
-      
+
       
 
       this.setState({ctCodes: Object.keys(countriesGrupedByiso), all_data, stats});
+
+  }
+
+  handleGraphData =(country, region=null)=>{
+    const {selected, selectedRegion, tendays} = this.state;
+
+    const payload = {...tendays}
+
+    console.log(country, region)
+
+    console.log(Object.fromEntries(Object.entries(payload).map(([date, data])=>[date, data[country]])))
+
+    
+    let last10days = Object.keys(payload).map(key=>{
+        let theObj = payload[key][country] || {confirmed: 0, recovered:0, deaths:0};
+
+
+
+        return [key.slice(0,5), theObj.confirmed  , theObj.recovered, theObj.deaths];
+
+    }).reverse();
+
+      last10days.unshift(["DATE", "Confirmed", "Recovered", "Deaths"])
+
+      this.setState({last10days})
+
+  }
+
+  getWorldData = async ()=>{
+
+
+    
+
+    try{
+
+      
+
+      const URL ="https://covid19.mathdro.id/api/confirmed"
+
+      const response = await fetch(URL);
+      const data = await response.json();
+
+      const countriesGrupedByiso = groupBy(data, 'iso2');
+    
+    
+      let all_data = {};
+
+
+      Object.entries(countriesGrupedByiso).forEach(([code, data])=>{
+        
+        let country = data[0].countryRegion;
+        let confirmed = data.map(dt=>dt.confirmed).reduce((a,c)=>a+c,0);
+        let recovered = data.map(dt=>dt.recovered).reduce((a,c)=>a+c,0); 
+        let deaths = data.map(dt=>dt.deaths).reduce((a,c)=>a+c,0);
+        let active = data.map(dt=>dt.active).reduce((a,c)=>a+c,0);
+        let lastUpdate = data.map(dt=>dt.lastUpdate).sort((a,b)=>b-a)[0];
+        let regions = data.filter(dt=>dt.provinceState).length ? data.filter(dt=>dt.provinceState) : null;
+
+        
+
+        all_data[code] = {
+          country,
+          confirmed,
+          recovered,
+          deaths,
+          active,
+          lastUpdate,
+          regions
+        }
+      })
+
+      let stats = {
+        confirmed: Object.values(all_data).map(dt=>dt.confirmed).reduce((a,c)=>a+c,0),
+        recovered: Object.values(all_data).map(dt=>dt.recovered).reduce((a,c)=>a+c,0),
+        deaths: Object.values(all_data).map(dt=>dt.deaths).reduce((a,c)=>a+c,0),
+        active: Object.values(all_data).map(dt=>dt.active).reduce((a,c)=>a+c,0),
+        last_update: new Date(Object.values(all_data).map(dt=>dt.lastUpdate).sort((a,b)=>b-a)[0])
+      }
+
+      
+
+      this.setState({ctCodes: Object.keys(countriesGrupedByiso), all_data, stats});
+      
+      
       // console.log(countriesGrupedByiso, "COVID")
       // console.log(data.map(dt=>dt.deaths).reduce((a,c)=>a+c, 0), 'COVID')
 
@@ -105,29 +168,31 @@ class App extends Component {
       this.setState({stats: payload})
     }
 
-    // try{
-    //   const response = await fetch("https://covid19.mathdro.id/api");
-    //   const data = await response.json();
-    //   let payload = {
-    //     confirmed: data.confirmed.value,
-    //     recovered: data.recovered.value,
-    //     deaths: data.deaths.value,
-    //     last_update: new Date(data.lastUpdate)
-    //   }
-    //   this.setState({stats: payload})
-    // }catch(err){
-    //   let payload = {
-    //     confirmed: 0,
-    //     recovered: 0,
-    //     deaths: 0
-    //   }
-    //   this.setState({stats: payload})
-    // }
+    try {
+      const resp = await fetch('https://covid19.mathdro.id/api/daily');
+      const payload = await resp.json();
+
+      let last10days = payload.map(item=>([item.reportDateString.slice(6), item.totalConfirmed, item.totalRecovered])).slice(payload.length-10);
+
+      last10days.unshift(["DATE", "Confirmed", "Recovered"])
+
+      this.setState({last10days})
+
+    }catch(err){
+      console.log(err)
+    }
+
+    const ten_days_data = await last10DaysOfData();
+
+    this.setState({tendays: ten_days_data})
+
+    
     
   }
 
   _handleSelectRegion = region=>{
     const {confirmed, deaths, recovered, active, lastUpdate} = this.state.regions[region];
+    const {all_data, selected} = this.state;
 
     let stats = {
       confirmed,
@@ -136,6 +201,7 @@ class App extends Component {
       active,
       last_update: new Date(lastUpdate)
     }
+    // this.handleGraphData(all_data[countries[selected]].country, region);
 
     this.setState({selectedRegion: region, stats});
   }
@@ -144,33 +210,12 @@ class App extends Component {
     this.setState({selected: country, selectedRegion: null, regions: {}});
     if (!country) return this.getWorldData();
 
-    // let theCountry = countries[country] === 'TW' ? 'Taiwan*' : countries[country];
-
-    // let theCountry = codes[countries[country]];
-
-    // console.log(country, countries[country])
-
-    // let errs = []
-
-    // for(const key in codes){
-    //   try {
-    //     const response = await fetch("https://covid19.mathdro.id/api/countries/"+codes[key]);
-    //     const data = await response.json();
-    //   }catch(err){
-    //     errs.push(codes[key])
-    //   }
-    // }
-
-    // console.log(errs, "ERRORS")
-
     try{
-      // const response = await fetch("https://covid19.mathdro.id/api/countries/"+theCountry);
-      // const data = await response.json();
-
-      // const res = await fetch("https://covid19.mathdro.id/api/countries/"+theCountry+"/confirmed");
-      // const regionData = await res.json();
-
+     
       const data = this.state.all_data[countries[country]];
+
+      console.log(data)
+      
       const regionData = data.regions;
 
       let regions = {};
@@ -184,9 +229,12 @@ class App extends Component {
         active: data.active,
         last_update: new Date(data.lastUpdate)
       }
-  
+
+      
       this.setState({stats: payload, regions})
+      this.handleGraphData(data.country);
     }catch(err){
+      console.log(err)
       let payload = {
         confirmed: 0,
         recovered: 0,
@@ -203,7 +251,7 @@ class App extends Component {
 
   
   render (){
-    const {selected, selectedRegion, stats, filterValue, filterRegion, regions, ctCodes} = this.state;
+    const {selected, selectedRegion, stats, filterValue, filterRegion, regions, ctCodes, last10days} = this.state;
 
     if (!stats || !ctCodes) return null;
 
@@ -216,7 +264,7 @@ class App extends Component {
 
     return (
       <>
-      <Container className="mb-5">
+      <Container  className="mb-5">
       <Jumbotron  className="text-center text-white jumbo">
         <h1>COVID-19 IN NUMBERS</h1>
         
@@ -231,7 +279,7 @@ class App extends Component {
           </Dropdown.Toggle>
 
           <Dropdown.Menu
-          style={{maxHeight: "50vh", overflow: "auto"}}
+          style={{maxHeight: "50vh", overflow: "auto", paddingRight:'5px'}}
           >
             
             <input 
@@ -280,7 +328,7 @@ class App extends Component {
           </Dropdown.Toggle>
 
           <Dropdown.Menu
-          style={{maxHeight: "50vh", overflow: "auto"}}
+          style={{maxHeight: "50vh", overflow: "auto", paddingRight:'5px'}}
           >
             
             <input 
@@ -341,6 +389,16 @@ class App extends Component {
           
         </Row>
             <p className="text-center text-white">{`Last Updated : ${formatDate(stats.last_update)}`}</p>
+            {
+              last10days
+              ?
+              <Chart
+              data={last10days}
+              placeName={`${selected || 'THE WORLD'}`}
+              />
+              :
+              null
+            }
       </Container>
       <footer className="container-fluid">
         <nav className="navbar fixed-bottom footer-style justify-content-center">
@@ -362,4 +420,69 @@ function formatDate(date){
   return date.toLocaleTimeString('en-US', options);
 }
 
+
+function formatDateFor(date){
+  var dd = date.getDate();
+  var mm = date.getMonth()+1;
+  var yyyy = date.getFullYear();
+  if(dd<10) {dd='0'+dd}
+  if(mm<10) {mm='0'+mm}
+  date = mm+'-'+dd+"-"+yyyy;
+  return date
+}
+
+
+
+async function last10DaysOfData () {
+  let result = {};
+  
+  let number_of_days = 10
+  for (let i=0; i<number_of_days; i++) {
+      let d = new Date();
+      d.setDate(d.getDate() - i);
+
+      try{
+
+      const response = await fetch('https://covid19.mathdro.id/api/daily/'+formatDateFor(d));
+      const data = await response.json();
+
+      data.forEach(dt=>dt.countryRegion = dt.countryRegion.includes('China') ? "China" : dt.countryRegion);
+      
+     if(data.length){
+       let groupedData = groupBy(data, 'countryRegion');
+       Object.entries(groupedData).forEach(([country, data])=>{
+
+        let payload = {
+          confirmed: data.map(dt=>parseInt(dt.confirmed)).reduce((a,c)=>a+c, 0),
+          recovered: data.map(dt=>parseInt(dt.recovered)).reduce((a,c)=>a+c, 0),
+          deaths: data.map(dt=>parseInt(dt.deaths)).reduce((a,c)=>a+c, 0),
+          // regions: data.filter(dt=>dt.provinceState).length ? groupBy(data.filter(dt=>dt.provinceState), 'provinceState') : null
+        }
+
+        // data.filter(dt=>dt.provinceState).length ? data.filter(dt=>dt.provinceState).forEach(region=>payload.regions[region.provinceState]=region) : payload.regions=null;
+
+        groupedData[country] = payload;
+        
+
+       })
+      
+      result[formatDateFor(d)] = groupedData;
+      
+     }else{
+      number_of_days++;
+     }
+      
+
+      }catch(err){
+        number_of_days++;
+      }
+      
+      
+      
+  }
+
+  
+
+  return result;
+}
 
