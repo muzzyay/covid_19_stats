@@ -21,7 +21,7 @@ export default class App extends Component {
       // lineWidth: 25
     }
     return (
-      <div className={"my-pretty-chart-container"}>
+      // <div className={"my-pretty-chart-container"}>
         <Chart
           chartType="AreaChart"
           loader={<div>Loading Chart</div>}
@@ -39,7 +39,7 @@ export default class App extends Component {
           
           legendToggle
         />
-      </div>
+     // </div>
     );
   }
 }

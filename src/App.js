@@ -73,18 +73,18 @@ class App extends Component {
 
   }
 
-  handleGraphData =(country, region=null)=>{
+  handleGraphData =(info, region=null)=>{
     const {selected, selectedRegion, tendays} = this.state;
 
     const payload = {...tendays}
 
-    console.log(country, region)
+    // console.log(country, region)
 
-    console.log(Object.fromEntries(Object.entries(payload).map(([date, data])=>[date, data[country]])))
+    console.log(Object.fromEntries(Object.entries(payload).map(([date, data])=>[date, data[info.country]])))
 
     
     let last10days = Object.keys(payload).map(key=>{
-        let theObj = payload[key][country] || {confirmed: 0, recovered:0, deaths:0};
+        let theObj = payload[key][info.country] || {confirmed: 0, recovered:0, deaths:0};
 
 
 
@@ -93,6 +93,7 @@ class App extends Component {
     }).reverse();
 
       last10days.unshift(["DATE", "Confirmed", "Recovered", "Deaths"])
+      last10days.push(["Current", info.confirmed, info.recovered, info.deaths])
 
       this.setState({last10days})
 
@@ -232,7 +233,7 @@ class App extends Component {
 
       
       this.setState({stats: payload, regions})
-      this.handleGraphData(data.country);
+      this.handleGraphData(data);
     }catch(err){
       console.log(err)
       let payload = {
@@ -437,7 +438,7 @@ async function last10DaysOfData () {
   let result = {};
   
   let number_of_days = 10
-  for (let i=0; i<number_of_days; i++) {
+  for (let i=-1; i<number_of_days; i++) {
       let d = new Date();
       d.setDate(d.getDate() - i);
 
