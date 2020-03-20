@@ -88,10 +88,12 @@ class App extends Component {
 
 
 
-        return [key.slice(0,5), theObj.confirmed  , theObj.recovered, theObj.deaths];
+        return [key.slice(0,5).replace('-','/'), theObj.confirmed  , theObj.recovered, theObj.deaths];
 
     }).reverse();
 
+
+      last10days.shift();
       last10days.unshift(["DATE", "Confirmed", "Recovered", "Deaths"])
       last10days.push(["Current", info.confirmed, info.recovered, info.deaths])
 
