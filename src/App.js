@@ -30,6 +30,8 @@ class App extends Component {
   dataRestructure = (data, code=null)=>{
     const {selected, selectedRegion} = this.state;
 
+   // console.log(data)
+
     const countriesGrupedByiso = groupBy(data, 'iso2');
     
     
@@ -44,7 +46,7 @@ class App extends Component {
         let deaths = data.map(dt=>dt.deaths).reduce((a,c)=>a+c,0);
         let active = data.map(dt=>dt.active).reduce((a,c)=>a+c,0);
         let lastUpdate = data.map(dt=>dt.lastUpdate).sort((a,b)=>b-a)[0];
-        let regions = data.filter(dt=>dt.provinceState).length ? data.filter(dt=>dt.provinceState) : null;
+        let regions = data.filter(dt=>dt.provinceState).length ? groupBy(data.filter(dt=>dt.provinceState), 'provinceState') : null;
 
         
 
@@ -80,7 +82,7 @@ class App extends Component {
 
     // console.log(country, region)
 
-    console.log(Object.fromEntries(Object.entries(payload).map(([date, data])=>[date, data[info.country]])))
+    //console.log(Object.fromEntries(Object.entries(payload).map(([date, data])=>[date, data[info.country]])))
 
     
     let last10days = Object.keys(payload).map(key=>{
@@ -129,9 +131,16 @@ class App extends Component {
         let deaths = data.map(dt=>dt.deaths).reduce((a,c)=>a+c,0);
         let active = data.map(dt=>dt.active).reduce((a,c)=>a+c,0);
         let lastUpdate = data.map(dt=>dt.lastUpdate).sort((a,b)=>b-a)[0];
-        let regions = data.filter(dt=>dt.provinceState).length ? data.filter(dt=>dt.provinceState) : null;
+        let regions = data.filter(dt=>dt.provinceState).length ? groupBy(data.filter(dt=>dt.provinceState), 'provinceState') : null;
 
-        
+        regions && Object.entries(regions).forEach(([name, info])=>{
+          regions[name] = {
+            confirmed: info.map(item=>item.confirmed).reduce((a,c)=>parseFloat(a)+parseFloat(c),0),
+            recovered: info.map(item=>item.recovered).reduce((a,c)=>parseFloat(a)+parseFloat(c),0),
+            deaths: info.map(item=>item.deaths).reduce((a,c)=>parseFloat(a)+parseFloat(c),0),
+            lastUpdate: info[0].lastUpdate
+          }
+        })
 
         all_data[code] = {
           country,
@@ -175,14 +184,20 @@ class App extends Component {
       const resp = await fetch('https://covid19.mathdro.id/api/daily');
       const payload = await resp.json();
 
-      let last10days = payload.map(item=>([item.reportDateString.slice(6), item.totalConfirmed, item.totalRecovered])).slice(payload.length-10);
+     // console.log(payload)
 
-      last10days.unshift(["DATE", "Confirmed", "Recovered"])
+      
+
+      let last10days = payload.map(item=>([item.reportDate.slice(6), item.totalConfirmed])).slice(payload.length-10);
+
+      last10days.unshift(["DATE", "Confirmed"])
+
+      //console.log(last10days)
 
       this.setState({last10days})
 
     }catch(err){
-      console.log(err)
+      console.log(err, "ERROR")
     }
 
     const ten_days_data = await last10DaysOfData();
@@ -217,13 +232,13 @@ class App extends Component {
      
       const data = this.state.all_data[countries[country]];
 
-      console.log(data)
+      //console.log(data)
       
       const regionData = data.regions;
 
-      let regions = {};
+      let regions = data.regions;
 
-      regionData&&regionData.filter(reg=>reg.provinceState).forEach(region=>regions[region.provinceState]=region);
+      // regionData&&regionData.filter(reg=>reg.provinceState).forEach(region=>regions[region.provinceState]=region);
 
       let payload = {
         confirmed: data.confirmed,
@@ -254,7 +269,9 @@ class App extends Component {
 
   
   render (){
-    const {selected, selectedRegion, stats, filterValue, filterRegion, regions, ctCodes, last10days} = this.state;
+    const {selected, selectedRegion, stats, filterValue, filterRegion, regions, ctCodes, last10days, all_data} = this.state;
+
+    //console.log(all_data)
 
     if (!stats || !ctCodes) return null;
 
