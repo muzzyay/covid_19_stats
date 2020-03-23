@@ -27,53 +27,7 @@ class App extends Component {
     this.getWorldData();
   }
 
-  dataRestructure = (data, code=null)=>{
-    const {selected, selectedRegion} = this.state;
-
-   // console.log(data)
-
-    const countriesGrupedByiso = groupBy(data, 'iso2');
-    
-    
-      let all_data = {};
-
-
-      Object.entries(countriesGrupedByiso).forEach(([code, data])=>{
-        
-        let country = data[0].countryRegion;
-        let confirmed = data.map(dt=>dt.confirmed).reduce((a,c)=>a+c,0);
-        let recovered = data.map(dt=>dt.recovered).reduce((a,c)=>a+c,0); 
-        let deaths = data.map(dt=>dt.deaths).reduce((a,c)=>a+c,0);
-        let active = data.map(dt=>dt.active).reduce((a,c)=>a+c,0);
-        let lastUpdate = data.map(dt=>dt.lastUpdate).sort((a,b)=>b-a)[0];
-        let regions = data.filter(dt=>dt.provinceState).length ? groupBy(data.filter(dt=>dt.provinceState), 'provinceState') : null;
-
-        
-
-        all_data[code] = {
-          country,
-          confirmed,
-          recovered,
-          deaths,
-          active,
-          lastUpdate,
-          regions
-        }
-      })
-
-      let stats = {
-        confirmed: Object.values(all_data).map(dt=>dt.confirmed).reduce((a,c)=>a+c,0),
-        recovered: Object.values(all_data).map(dt=>dt.recovered).reduce((a,c)=>a+c,0),
-        deaths: Object.values(all_data).map(dt=>dt.deaths).reduce((a,c)=>a+c,0),
-        active: Object.values(all_data).map(dt=>dt.active).reduce((a,c)=>a+c,0),
-        last_update: new Date(Object.values(all_data).map(dt=>dt.lastUpdate).sort((a,b)=>b-a)[0])
-      }
-
-      
-
-      this.setState({ctCodes: Object.keys(countriesGrupedByiso), all_data, stats});
-
-  }
+  
 
   handleGraphData =(info, region=null)=>{
     const {selected, selectedRegion, tendays} = this.state;
@@ -161,6 +115,8 @@ class App extends Component {
         last_update: new Date(Object.values(all_data).map(dt=>dt.lastUpdate).sort((a,b)=>b-a)[0])
       }
 
+      console.log(all_data)
+
       
 
       this.setState({ctCodes: Object.keys(countriesGrupedByiso), all_data, stats});
@@ -226,17 +182,19 @@ class App extends Component {
 
   _handleSelect = async country =>{
     this.setState({selected: country, selectedRegion: null, regions: {}});
+
+    
     if (!country) return this.getWorldData();
 
     try{
      
       const data = this.state.all_data[countries[country]];
 
-      //console.log(data)
+      console.log(data)
       
       const regionData = data.regions;
 
-      let regions = data.regions;
+      let regions = data.regions || {};
 
       // regionData&&regionData.filter(reg=>reg.provinceState).forEach(region=>regions[region.provinceState]=region);
 
@@ -271,7 +229,7 @@ class App extends Component {
   render (){
     const {selected, selectedRegion, stats, filterValue, filterRegion, regions, ctCodes, last10days, all_data} = this.state;
 
-    //console.log(all_data)
+    console.log(ctCodes)
 
     if (!stats || !ctCodes) return null;
 
