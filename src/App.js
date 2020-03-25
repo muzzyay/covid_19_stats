@@ -4,6 +4,10 @@ import {InfoBox} from "./components/ui";
 import Chart from "./components/chart";
 import countries from "./constants/countries";
 
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+// import {  } from '@fortawesome/free-solid-svg-icons'
+import { faGithub, faLinkedin } from '@fortawesome/free-brands-svg-icons'
+
 import {groupBy} from "lodash";
 
 import {Container, Row, Col, Dropdown, Jumbotron} from 'react-bootstrap';
@@ -242,7 +246,7 @@ class App extends Component {
 
     return (
       <>
-      <Container  className="mb-5">
+      <Container  className="mb-5 pb-5">
       <Jumbotron  className="text-center text-white jumbo">
         <h1>COVID-19 IN NUMBERS</h1>
         
@@ -378,10 +382,30 @@ class App extends Component {
               null
             }
       </Container>
-      <footer className="container-fluid">
+      {/* <footer className="container-fluid">
         <nav className="navbar fixed-bottom footer-style justify-content-center">
           {` Mustafa Ay  @2020 `}
         </nav>
+      </footer> */}
+      <footer className="fixed-bottom footer-style text-center pt-1 pb-2">
+      <p>Mustafa Ay  @2020</p>
+      <a href="https://github.com/muzzyay" target="_blank" rel="noopener noreferrer">
+        <FontAwesomeIcon
+        className="brandicon"
+        color="#171717"
+        size="2x"
+        icon={faGithub}
+        />
+      </a>
+      
+      <a className="ml-5" href="https://www.linkedin.com/in/mustafa-ay-a3325b74/" target="_blank" rel="noopener noreferrer">
+        <FontAwesomeIcon
+        className="brandicon"
+        color="#2969b1"
+        size="2x"
+        icon={faLinkedin}
+        />
+      </a>
       </footer>
       </>
     );

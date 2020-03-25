@@ -23,5 +23,9 @@ body {
 
 .footer-style {
     background-color: lightgray;
-    margin-top: 5px;
+    /* margin-top: 5px; */
+}
+
+.brandicon:hover {
+    opacity: 0.7;
 }
