@@ -144,7 +144,7 @@ class App extends Component {
       const resp = await fetch('https://covid19.mathdro.id/api/daily');
       const payload = await resp.json();
 
-     // console.log(payload)
+     console.log(payload)
 
       
 
@@ -382,12 +382,12 @@ class App extends Component {
               null
             }
       </Container>
-      {/* <footer className="container-fluid">
+      <footer className="container-fluid">
         <nav className="navbar fixed-bottom footer-style justify-content-center">
           {` Mustafa Ay  @2020 `}
         </nav>
-      </footer> */}
-      <footer className="fixed-bottom footer-style text-center pt-1 pb-2">
+      </footer>
+      {/* <footer className="fixed-bottom footer-style text-center pt-1 pb-2">
       <p>Mustafa Ay  @2020</p>
       <a href="https://github.com/muzzyay" target="_blank" rel="noopener noreferrer">
         <FontAwesomeIcon
@@ -406,7 +406,7 @@ class App extends Component {
         icon={faLinkedin}
         />
       </a>
-      </footer>
+      </footer> */}
       </>
     );
   }
