@@ -77,7 +77,7 @@ class App extends Component {
 
       const countriesGrupedByiso = groupBy(data, 'iso2');
     
-    
+      
       let all_data = {};
 
 
@@ -99,6 +99,8 @@ class App extends Component {
             lastUpdate: info[0].lastUpdate
           }
         })
+        
+        
 
         all_data[code] = {
           country,
@@ -187,16 +189,18 @@ class App extends Component {
   _handleSelect = async country =>{
     this.setState({selected: country, selectedRegion: null, regions: {}});
 
-    
+   
     if (!country) return this.getWorldData();
 
     try{
      
-      const data = this.state.all_data[countries[country]];
+      let data = this.state.all_data[countries[country]];
 
-      console.log(data)
-      
-      const regionData = data.regions;
+      if(countries[country]==='US'){
+        const usData= await fetch('https://covid19.mathdro.id/api/countries/US').then(res=>res.json());
+        data.recovered = usData.recovered.value;
+      }
+
 
       let regions = data.regions || {};
 
